@@ -17,6 +17,8 @@ class Server:
         #configuration du socket et attente de connexion
         s.bind((HOST, PORT))
         s.listen()
+        s.settimeout(60)
+        self.server_socket = s
         server_ready.release()  # Indiquer que le serveur est prêt
 
 
