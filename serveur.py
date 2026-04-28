@@ -1,18 +1,29 @@
 import socket
+import threading
 import openssl_utils as ou
 
 # configuration socket
 HOST = '127.0.0.1'
 PORT = 65432
 
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    s.bind((HOST, PORT))
-    s.listen()
-    print(f"Le serveur ecoute sur {HOST}:{PORT}...")
+ 
+class Server:
+    session_key = None
+    connection= None
 
-    conn, addr = s.accept()
+    def __init__(self, HOST, PORT, server_ready):
 
-    with conn:
+        s= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        #configuration du socket et attente de connexion
+        s.bind((HOST, PORT))
+        s.listen()
+        server_ready.release()  # Indiquer que le serveur est prêt
+
+
+        print(f"Le serveur ecoute sur {HOST}:{PORT}...")
+
+        conn, addr = s.accept()
+
 
         # generation des clés RSA et du certificat
         private_key, public_key = ou.generate_rsa_keys()
@@ -25,25 +36,27 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
         # obtention de clé de session
         encrypted_key = conn.recv(4096).decode('utf-8')
-        session_key = ou.decrypt_key_rsa(encrypted_key, private_key)
+        self.session_key = ou.decrypt_key_rsa(encrypted_key, private_key)
 
         print("\nUne connexion sécurisée a été établie avec le client.\n")
+        self.connection= conn
+          # Indiquer que la connexion est établie pour le main
 
-        # ECHANGE DE MESSAGES
-        def recevoir_message():
-            data = conn.recv(4096).decode('utf-8')
-            decrypted = ou.decrypt_data_aes(data, session_key)
-            print(f"Message recu [{decrypted}]")
-            return decrypted
+                
+    def recevoir_message(self):
+        data = self.connection.recv(4096).decode('utf-8') #type: ignore
+        decrypted = ou.decrypt_data_aes(data, self.session_key)
+        print(f"Message recu [{decrypted}]")
+        return decrypted
         
-        def envoyer_message(message):
-            message_encrypted = ou.encrypt_data_aes(message, session_key)
-            conn.sendall(message_encrypted.encode())
-            print(f"Message envoyé ["+message+"].")
+    def envoyer_message(self, message):
+        message_encrypted = ou.encrypt_data_aes(message, self.session_key)
+        self.connection.sendall(message_encrypted.encode()) #type: ignore
+        print(f"Message envoyé ["+message+"].")
 
-
-        message = recevoir_message()
-        envoyer_message("Hello to you as well!")
-        
+    def test(self):
+        message = self.recevoir_message()
+        self.envoyer_message("Hello to you as well!")
+    
         
 
