@@ -97,20 +97,20 @@ class SecureExchangeGUI:
         try:
             thread = threading.Thread(target=self._server_thread, daemon=True)
             thread.start()
-            self.log_server("Starting server...")
+            self.log_server("Démarrage du serveur...")
         except Exception as e:
             messagebox.showerror("Error", f"Server Error: {str(e)}")
             self.log_server(f"ERROR: {str(e)}")
     
     def _server_thread(self):#la methode qui sera exécutée dans le thread de creation de serveur
         try:
-            self.log_server("Waiting for client connection...")
+            self.log_server("Attente de connexion client...")
             self.server_instance = serveur.Server('127.0.0.1', 65432, self.server_ready)
-            self.log_server("Client connected - Server ready")
+            self.log_server("Client connecté - Serveur préts")
         except socket.timeout:
-            self.log_server("ERROR: Connection timeout (60 seconds)")
+            self.log_server("ERREUR: Connection timeout (60 seconds)")
         except Exception as e:
-            self.log_server(f"ERROR: {str(e)}")
+            self.log_server(f"ERREUR: {str(e)}")
     
     def start_client(self):# crée une instance d'un client dans un nouveau thread
         try:
@@ -128,13 +128,13 @@ class SecureExchangeGUI:
             self.client_instance = client.Client('127.0.0.1', 65432, 'target_server', self.client_ready)
             self.log_client("Connexion avec succès - Client prêt")
         except socket.timeout:
-            self.log_client("ERREUR: Server not non préts (timeout)")
+            self.log_client("ERREUR: Server non préts (timeout)")
         except Exception as e:
             self.log_client(f"ERROR: {str(e)}")
     
     def server_send_message(self):#fait envoyer un message du serveur
         if not self.server_instance:
-            messagebox.showwarning("Warning", "Server not initilizé")
+            messagebox.showwarning("Warning", "Serveur non initialisé")
             return
         
         message = self.server_message_input.get()
@@ -150,7 +150,7 @@ class SecureExchangeGUI:
     
     def server_receive_message(self):#fait recevoir un message au serveur dans un thread séparé
         if not self.server_instance:
-            messagebox.showwarning("Warning", "Server not initialized")
+            messagebox.showwarning("Warning", "Serveur non initialisé")
             return
         
         thread = threading.Thread(target=self._server_receive_thread, daemon=True)
@@ -165,12 +165,12 @@ class SecureExchangeGUI:
     
     def client_send_message(self):#fait envoyer un message du client
         if not self.client_instance:
-            messagebox.showwarning("Warning", "Client not connected")
+            messagebox.showwarning("Warning", "Client non connecté")
             return
         
         message = self.client_message_input.get()
         if not message:
-            messagebox.showwarning("Warning", "Enter a message")
+            messagebox.showwarning("Warning", "Entrez un message")
             return
         
         try:
@@ -182,7 +182,7 @@ class SecureExchangeGUI:
     
     def client_receive_message(self):#fait recevoir un message au client
         if not self.client_instance:
-            messagebox.showwarning("Warning", "Client not connected")
+            messagebox.showwarning("Warning", "Client non connecté")
             return
         
         thread = threading.Thread(target=self._client_receive_thread, daemon=True)
